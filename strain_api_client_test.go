@@ -43,12 +43,20 @@ func commonFirstStrain() Strain {
 	}
 }
 
-func commonFirstStrainSummary() StrainSummary {
-	return StrainSummary{
+func commonFirstSearchStrainByNameResult() SearchStrainsByNameResult {
+	return SearchStrainsByNameResult{
 		Name:        "Afpak",
 		ID:          1,
 		Race:        RaceHybrid,
 		Description: "Afpak, named for its direct Afghani and Pakistani landrace heritage, is a beautiful indica-dominant hybrid with light green and deep bluish purple leaves. The taste and aroma are floral with a touch of lemon, making the inhale light and smooth. Its effects start in the stomach by activating the appetite. There is also a potent relaxation that starts in the head and face, and gradually sinks down into the body. Enjoy this strain if you’re suffering from stress, mild physical discomfort, or having difficulty eating.",
+	}
+}
+
+func commonFirstSearchStrainByRaceResult() SearchStrainsByRaceResult {
+	return SearchStrainsByRaceResult{
+		Name: "Afpak",
+		ID:   1,
+		Race: RaceHybrid,
 	}
 }
 
@@ -126,7 +134,7 @@ func TestSearchStrainsByName(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
-	expectedFirstStrainSummary := commonFirstStrainSummary()
+	expectedFirstStrainSummary := commonFirstSearchStrainByNameResult()
 
 	allStrains, err := createTestDefaultClient(t).SearchStrainsByName("Af")
 	if err != nil {
@@ -150,7 +158,7 @@ func TestSearchStrainsByRace(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
-	expectedFirstStrainSummary := commonFirstStrainSummary()
+	expectedFirstStrainSummary := commonFirstSearchStrainByRaceResult()
 
 	allStrains, err := createTestDefaultClient(t).SearchStrainsByRace(RaceHybrid)
 	if err != nil {
@@ -159,10 +167,6 @@ func TestSearchStrainsByRace(t *testing.T) {
 
 	actualCount := len(allStrains)
 	actualStrain := allStrains[0]
-
-	// This search does not set the Description,
-	// so blank out the Descipriton on the expected item.
-	expectedFirstStrainSummary.Description = ""
 
 	if actualCount == 0 || !cmp.Equal(expectedFirstStrainSummary, actualStrain) {
 		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainSummary, actualCount, actualStrain)

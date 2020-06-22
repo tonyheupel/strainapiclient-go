@@ -138,14 +138,6 @@ const (
 	RaceHybrid = "hybrid"
 )
 
-// StrainSummary represents a high-level description of a Strain
-type StrainSummary struct {
-	Name        string `json:"name"`
-	ID          int    `json:"id"`
-	Description string `json:"desc"`
-	Race        Race   `json:"race"`
-}
-
 // Strain represents a single strain of cannabis and its properites.
 type Strain struct {
 	Name        string                  `json:"name"`
@@ -189,13 +181,23 @@ func populateStrainNames(strains ListAllStrainsResult) {
 	}
 }
 
-// StrainSearchResults is a slice of StrainSummary results from a search.
-type StrainSearchResults []StrainSummary
+// SearchStrainsByNameResult represents a single item in the results of a
+// SearchStrainsByName call.
+type SearchStrainsByNameResult struct {
+	Name        string `json:"name"`
+	ID          int    `json:"id"`
+	Description string `json:"desc"`
+	Race        Race   `json:"race"`
+}
 
-// SearchStrainsByName gets a StrainSearchResult of all strains matching
+// SearchStrainsByNameResults is a slice of SearchStrainsByNameResult
+// results from a SearchStrainsByName call.
+type SearchStrainsByNameResults []SearchStrainsByNameResult
+
+// SearchStrainsByName returns a SearchStrainsByNameResults of all strains matching
 // the name passed in.
-func (c *DefaultClient) SearchStrainsByName(name string) (StrainSearchResults, error) {
-	strainsResults := make(StrainSearchResults, 0)
+func (c *DefaultClient) SearchStrainsByName(name string) (SearchStrainsByNameResults, error) {
+	strainsResults := make(SearchStrainsByNameResults, 0)
 
 	searchURL := strainSearchBasePath + "/name/" + name
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
@@ -209,10 +211,23 @@ func (c *DefaultClient) SearchStrainsByName(name string) (StrainSearchResults, e
 	return strainsResults, marshallErr
 }
 
+// SearchStrainsByRaceResult represents a single item in the results of a
+// SearchStrainsByRace call.
+type SearchStrainsByRaceResult struct {
+	Name string `json:"name"`
+	ID   int    `json:"id"`
+	Race Race   `json:"race"`
+}
+
+// SearchStrainsByRaceResults is a slice of SearchStrainsByRaceResult
+//  results
+// the name passed in.
+type SearchStrainsByRaceResults []SearchStrainsByRaceResult
+
 // SearchStrainsByRace gets a StrainSearchResult of all strains matching
 // the Race passed in.
-func (c *DefaultClient) SearchStrainsByRace(race Race) (StrainSearchResults, error) {
-	strainsResults := make(StrainSearchResults, 0)
+func (c *DefaultClient) SearchStrainsByRace(race Race) (SearchStrainsByRaceResults, error) {
+	strainsResults := make(SearchStrainsByRaceResults, 0)
 
 	searchURL := strainSearchBasePath + "/race/" + string(race)
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
