@@ -14,16 +14,16 @@ const baseURL string = "https://" + baseURLHost
 
 // Client represents the interface a Client must implemenet
 type Client interface {
-	ListAllEffects()
-	ListAllFlavors()
-	ListAllStrains()
-	SearchStrainsByName(name string)
-	SearchStrainsByRace(race Race)
-	SearchStrainsByEffectName(effectName string)
-	SearchStrainsByFlavor(flavor Flavor)
-	GetStrainDescriptionByStrainD(id int)
-	GetStrainFavorsByStrainID(id int)
-	GetStrainEffectsByStrainID(id int)
+	ListAllEffects() ([]Effect, error)
+	ListAllFlavors() ([]Flavor, error)
+	ListAllStrains() (ListAllStrainsResult, error)
+	SearchStrainsByName(name string) (SearchStrainsByNameResults, error)
+	SearchStrainsByRace(race Race) (SearchStrainsByRaceResults, error)
+	SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFlavorResults, error)
+	SearchStrainsByEffectName(effectName string) (SearchStrainsByEffectNameResults, error)
+	GetStrainDescriptionByStrainID(id int) (string, error)
+	GetStrainFavorsByStrainID(id int) ([]Flavor, error)
+	GetStrainEffectsByStrainID(id int) (EffectsByEffectType, error)
 }
 
 // DefaultClient is the default implementation of a Client for The Strain API
@@ -367,7 +367,7 @@ type EffectsByEffectType map[EffectType][]Effect
 // GetStrainEffectsByStrainID returns an EffectsByEffectType.
 // Use EffectTypePositive, EffectTypeNegative, and EffectTypeMedical for the keys
 // and the values are a slice of Effect items.
-func (c *DefaultClient) GetStrainEffectsByStrainID(id int) (map[EffectType][]Effect, error) {
+func (c *DefaultClient) GetStrainEffectsByStrainID(id int) (EffectsByEffectType, error) {
 	effects := make(EffectsByEffectType)
 	effectsMap := make(map[string][]string)
 

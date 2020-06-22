@@ -12,7 +12,7 @@ import (
 func createTestDefaultClient(t *testing.T) *DefaultClient {
 	apiKey, found := os.LookupEnv("STRAIN_API_KEY")
 
-	if !found {
+	if !found && t != nil {
 		t.Errorf("Problem getting STRAIN_API_KEY from environemnt")
 	}
 
@@ -78,11 +78,12 @@ func TestListAllEffects(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+	var client Client = createTestDefaultClient(t)
 	expectedCount := 33
 	expectedFirstName := "Relaxed"
 	expectedFirstType := EffectTypePositive
 
-	allEffects, err := createTestDefaultClient(t).ListAllEffects()
+	allEffects, err := client.ListAllEffects()
 
 	if err != nil {
 		t.Error("Failed trying to list all effects", err)
@@ -102,10 +103,11 @@ func TestListALlFlavors(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+	var client Client = createTestDefaultClient(t)
 	expectedCount := 48
 	expectedFirstFlavor := Flavor("Earthy")
 
-	allFlavors, err := createTestDefaultClient(t).ListAllFlavors()
+	allFlavors, err := client.ListAllFlavors()
 	if err != nil {
 		t.Error("Failed trying to list all flavors", err)
 	}
@@ -121,10 +123,11 @@ func TestListAllStrains(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+	var client Client = createTestDefaultClient(t)
 	expectedCount := 1970
 	expectedFirstStrain := commonFirstStrain()
 
-	allStrains, err := createTestDefaultClient(t).ListAllStrains()
+	allStrains, err := client.ListAllStrains()
 	if err != nil {
 		t.Error("Failed trying to list all strains", err)
 	}
@@ -141,9 +144,10 @@ func TestSearchStrainsByName(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
+	var client Client = createTestDefaultClient(t)
 	expectedFirstStrainResult := commonFirstSearchStrainByNameResult()
 
-	allStrains, err := createTestDefaultClient(t).SearchStrainsByName("Af")
+	allStrains, err := client.SearchStrainsByName("Af")
 	if err != nil {
 		t.Error("Failed trying to search strains by name:", expectedFirstStrainResult.Name, err)
 	}
@@ -165,9 +169,10 @@ func TestSearchStrainsByRace(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
+	var client Client = createTestDefaultClient(t)
 	expectedFirstStrainResult := commonFirstSearchStrainByRaceResult()
 
-	allStrains, err := createTestDefaultClient(t).SearchStrainsByRace(RaceHybrid)
+	allStrains, err := client.SearchStrainsByRace(RaceHybrid)
 	if err != nil {
 		t.Error("Failed trying to search strains by race:", expectedFirstStrainResult.Name, err)
 	}
@@ -184,9 +189,10 @@ func TestSearchStrainsByEffectName(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
+	var client Client = createTestDefaultClient(t)
 	expectedFirstStrainResult := commonFirstSearchStrainByEffectNameResult()
 
-	allStrains, err := createTestDefaultClient(t).SearchStrainsByEffectName("Happy")
+	allStrains, err := client.SearchStrainsByEffectName("Happy")
 	if err != nil {
 		t.Error("Failed trying to search strains by effect name:", expectedFirstStrainResult.Name, err)
 	}
@@ -203,9 +209,10 @@ func TestSearchStrainsByFlavor(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
+	var client Client = createTestDefaultClient(t)
 	expectedFirstStrainResult := commonFirstSearchStrainByFlavorResult()
 
-	allStrains, err := createTestDefaultClient(t).SearchStrainsByFlavor("Earthy")
+	allStrains, err := client.SearchStrainsByFlavor("Earthy")
 	if err != nil {
 		t.Error("Failed trying to search strains by name:", expectedFirstStrainResult.Name, err)
 	}
@@ -222,11 +229,11 @@ func TestGetStrainDescriptionByStrainID(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
-
+	var client Client = createTestDefaultClient(t)
 	expectedDescription := commonFirstSearchStrainByNameResult().Description
 
 	strainID := 1
-	actualDescription, err := createTestDefaultClient(t).GetStrainDescriptionByStrainID(strainID)
+	actualDescription, err := client.GetStrainDescriptionByStrainID(strainID)
 
 	if err != nil {
 		t.Errorf("Failed trying to get description for strain with ID of %d: %s", strainID, err)
@@ -244,11 +251,11 @@ func TestGetStrainFavorsByStrainID(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
-
+	var client Client = createTestDefaultClient(t)
 	expectedFlavors := []Flavor{"Earthy", "Chemical", "Pine"}
 
 	strainID := 1
-	actualFlavors, err := createTestDefaultClient(t).GetStrainFavorsByStrainID(strainID)
+	actualFlavors, err := client.GetStrainFavorsByStrainID(strainID)
 
 	if err != nil {
 		t.Errorf("Failed trying to get flavors for strain with ID of %d: %s", strainID, err)
@@ -263,7 +270,7 @@ func TestGetStrainEffectsByStrainID(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
-
+	var client Client = createTestDefaultClient(t)
 	expectedPositiveEffects := []Effect{
 		{Name: "Relaxed", Type: EffectTypePositive},
 		{Name: "Happy", Type: EffectTypePositive},
@@ -282,13 +289,13 @@ func TestGetStrainEffectsByStrainID(t *testing.T) {
 		{Name: "Pain", Type: EffectTypeMedical},
 	}
 
-	expectedEffects := make(map[EffectType][]Effect)
+	expectedEffects := make(EffectsByEffectType)
 	expectedEffects[EffectTypePositive] = expectedPositiveEffects
 	expectedEffects[EffectTypeNegative] = expectedNegativeEffects
 	expectedEffects[EffectTypeMedical] = expectedMedicalEffects
 
 	strainID := 1
-	actualEffects, err := createTestDefaultClient(t).GetStrainEffectsByStrainID(strainID)
+	actualEffects, err := client.GetStrainEffectsByStrainID(strainID)
 
 	if err != nil {
 		t.Errorf("Failed trying to get effects for strain with ID of %d: %s", strainID, err)
