@@ -3,6 +3,7 @@ package strainapiclient
 import (
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -225,5 +226,86 @@ func TestSearchStrainsByFlavor(t *testing.T) {
 
 	if actualCount == 0 || !cmp.Equal(expectedFirstStrainResult, actualStrain) {
 		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainResult, actualCount, actualStrain)
+	}
+}
+
+func TestGetStrainDescriptionByStrainID(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+
+	expectedDescription := commonFirstSearchStrainByNameResult().Description
+
+	strainID := 1
+	actualDescription, err := createTestDefaultClient(t).GetStrainDescriptionByStrainID(strainID)
+
+	if err != nil {
+		t.Errorf("Failed trying to get description for strain with ID of %d: %s", strainID, err)
+	}
+
+	// Sample has extra non-printable UTF-8 character c2a0
+	actualDescription = strings.TrimSpace(strings.ReplaceAll(actualDescription, string([]byte{0xc2, 0xa0}), ""))
+
+	if actualDescription != expectedDescription {
+		t.Errorf("For strain with ID %d, expected description '%s' but got '%s'", strainID, expectedDescription, actualDescription)
+	}
+}
+
+func TestGetStrainFavorsByStrainID(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+
+	expectedFlavors := []Flavor{"Earthy", "Chemical", "Pine"}
+
+	strainID := 1
+	actualFlavors, err := createTestDefaultClient(t).GetStrainFavorsByStrainID(strainID)
+
+	if err != nil {
+		t.Errorf("Failed trying to get flavors for strain with ID of %d: %s", strainID, err)
+	}
+
+	if !reflect.DeepEqual(actualFlavors, expectedFlavors) {
+		t.Errorf("For strain with ID %d, expected '%v' but got '%v'", strainID, expectedFlavors, actualFlavors)
+	}
+}
+
+func TestGetStrainEffectsByStrainID(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+
+	expectedPositiveEffects := []Effect{
+		{Name: "Relaxed", Type: EffectTypePositive},
+		{Name: "Happy", Type: EffectTypePositive},
+		{Name: "Hungry", Type: EffectTypePositive},
+		{Name: "Sleepy", Type: EffectTypePositive},
+	}
+	expectedNegativeEffects := []Effect{
+		{Name: "Dizzy", Type: EffectTypeNegative},
+	}
+
+	expectedMedicalEffects := []Effect{
+		{Name: "Depression", Type: EffectTypeMedical},
+		{Name: "Stress", Type: EffectTypeMedical},
+		{Name: "Lack of Appetite", Type: EffectTypeMedical},
+		{Name: "Insomnia", Type: EffectTypeMedical},
+		{Name: "Pain", Type: EffectTypeMedical},
+	}
+
+	expectedEffects := make(map[EffectType][]Effect)
+	expectedEffects[EffectTypePositive] = expectedPositiveEffects
+	expectedEffects[EffectTypeNegative] = expectedNegativeEffects
+	expectedEffects[EffectTypeMedical] = expectedMedicalEffects
+
+	strainID := 1
+	actualEffects, err := createTestDefaultClient(t).GetStrainEffectsByStrainID(strainID)
+
+	if err != nil {
+		t.Errorf("Failed trying to get effects for strain with ID of %d: %s", strainID, err)
+	}
+
+	if !reflect.DeepEqual(actualEffects, expectedEffects) {
+		t.Errorf("For strain with ID %d, expected effects '%v' but got '%v'", strainID, expectedEffects, actualEffects)
 	}
 }
