@@ -1,13 +1,8 @@
 language: go
 go:
-- 1.10.x
-- 1.11.x
-- 1.12.x
-- 1.13.x
 - 1.14.x
 script:
 - go test .
 env:
   global:
     secure: tmhSLYp0gtNVwd9Ml8KYBy1csV3uFj+xvPIt3eINnW6VRSLpOrJul/NRN9RfiDNpXACvKd/CeIqty0Vtv9SQcWjCFFYwjKGnl5/hvrkAFA4BOC1+K/e+d/XVVQ18XYPFwEgc4w8BsjO0f91cJywLI4MxH6PyHgrUmPy5DDAjJgAb2+w7ty6J22bGRtsFLvoHtoJeyuWg0bDo7tt3seARSyQX76B7Vy0R8oLqjELsWRB9Iu8fx7ghu7MU9GwToeeabYWLL0gKEv0sCEPdmDVGTA5aQKzYSdOMcE9FxtW44JF80Fi8szOSOtXT3/YUKolbszNOSIkSFTNBjgjqXK33ZuKO64XT04TRarYCD8xbNRUIGR188OcTXdQKCqldkCG8y/YQXBPlhqVs3eLfBhW/jA2isX105kHfxu6hfPIeWnnJLXIbWO+esZPBKHrHTUCumAyD5a7EIsaKa7xijBB7+QihHWS+BBk01N7R2N7sbO/oIg9Vf5Bik99SrMlRBZ6wb4oG0c3CTLuHyTLCaBOjLDgDvezysyf4+zpTZO5kSbYDb2EAaygtI49TgxJyMuB3eOmYHC7Md0i1cknwEfT0yVUfMX2nfWrjlcn+ptWVmaX8fopyUGvlUyok8r54HOue3Hpzs4blnSxv/NpVCaMn+62cJmbx3kkZYs1cfnuzkQU=
-    
