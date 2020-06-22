@@ -227,3 +227,25 @@ func TestSearchStrainsByFlavor(t *testing.T) {
 		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainResult, actualCount, actualStrain)
 	}
 }
+
+func TestGetStrainDescriptionByID(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+
+	expectedDescription := commonFirstSearchStrainByNameResult().Description
+
+	strainID := 1
+	actualDescription, err := createTestDefaultClient(t).GetStrainDescriptionByID(strainID)
+
+	if err != nil {
+		t.Errorf("Failed trying to get description for strain with ID of %d: %s", strainID, err)
+	}
+
+	// Sample has extra non-printable UTF-8 character c2a0
+	actualDescription = strings.TrimSpace(strings.ReplaceAll(actualDescription, string([]byte{0xc2, 0xa0}), ""))
+
+	if actualDescription != expectedDescription {
+		t.Errorf("For strain with ID %d, expected description '%s' but got '%s'", strainID, expectedDescription, actualDescription)
+	}
+}

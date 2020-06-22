@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 const baseURLHost string = "strainapi.evanbusse.com"
@@ -151,7 +152,8 @@ type Strain struct {
 	Effects     map[EffectType][]string `json:"effects"`
 }
 
-const strainSearchBasePath string = "/strains/search"
+const strainsBasePath string = "/strains"
+const strainSearchBasePath string = strainsBasePath + "/search"
 
 // ListAllStrainsResult represents the results of a strain search
 type ListAllStrainsResult map[string]Strain
@@ -301,4 +303,32 @@ func (c *DefaultClient) SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFla
 	marshallErr := json.Unmarshal(strainsResultsJSONBytes, &strainsResults)
 
 	return strainsResults, marshallErr
+}
+
+const strainDataBasePath string = strainsBasePath + "/data"
+
+// GetStrainDescriptionByID retrieves the Description field for the
+// Strain with the ID passed in.
+func (c *DefaultClient) GetStrainDescriptionByID(id int) (string, error) {
+	url := strainDataBasePath + "/desc/" + strconv.Itoa(id)
+	descriptionResultsBytes, err := c.simpleHTTPGet(url)
+
+	if err != nil {
+		return "", err
+	}
+
+	descriptionResult := make(map[string]string)
+
+	marshallErr := json.Unmarshal(descriptionResultsBytes, &descriptionResult)
+
+	if marshallErr != nil {
+		return "", marshallErr
+	}
+
+	description := descriptionResult["desc"]
+
+	if description == "" {
+		return "", fmt.Errorf("Unable to find description in result")
+	}
+	return description, nil
 }
