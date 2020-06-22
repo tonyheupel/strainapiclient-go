@@ -3,6 +3,7 @@ package strainapiclient
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -105,5 +106,35 @@ func TestListAllStrains(t *testing.T) {
 
 	if actualCount != expectedCount || !cmp.Equal(expectedFirstStrain, actualStrain) {
 		t.Errorf("Expected %d strains with %s as the first, got %d results of %v instead.", expectedCount, expectedFirstStrain.Name, actualCount, actualStrain)
+	}
+}
+
+func TestSearchStrainsByName(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+	expectedCount := 18
+	expectedFirstStrain := StrainSummary{
+		Name:        "Afpak",
+		ID:          1,
+		Race:        RaceHybrid,
+		Description: "Afpak, named for its direct Afghani and Pakistani landrace heritage, is a beautiful indica-dominant hybrid with light green and deep bluish purple leaves. The taste and aroma are floral with a touch of lemon, making the inhale light and smooth. Its effects start in the stomach by activating the appetite. There is also a potent relaxation that starts in the head and face, and gradually sinks down into the body. Enjoy this strain if you’re suffering from stress, mild physical discomfort, or having difficulty eating.",
+	}
+
+	allStrains, err := createTestDefaultClient(t).SearchStrainsByName("Af")
+	if err != nil {
+		t.Error("Failed trying to search strains by name:", expectedFirstStrain.Name, err)
+	}
+
+	actualCount := len(allStrains)
+	actualStrain := allStrains[0]
+
+	// Sample data has a trailing 32 and 0xc2a0.  Trim before continuing
+	actualStrain.Description = strings.TrimSpace(
+		strings.Replace(
+			actualStrain.Description, string([]byte{0xc2, 0xa0}), "", 0))
+
+	if actualCount != expectedCount || !cmp.Equal(expectedFirstStrain, actualStrain) {
+		t.Errorf("Expected %d strains with %v as the first, got %d results of %v instead.", expectedCount, expectedFirstStrain, actualCount, actualStrain)
 	}
 }

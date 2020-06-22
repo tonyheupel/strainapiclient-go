@@ -138,24 +138,33 @@ const (
 	RaceHybrid = "hybrid"
 )
 
+// StrainSummary represents a high-level description of a Strain
+type StrainSummary struct {
+	Name        string `json:"name"`
+	ID          int    `json:"id"`
+	Description string `json:"desc"`
+	Race        Race   `json:"race"`
+}
+
 // Strain represents a single strain of cannabis and its properites.
 type Strain struct {
-	Name    string                  // no name field -- it's the name of the attribute
-	ID      int                     `json:"id"`
-	Race    Race                    `json:"race"`
-	Flavors []Flavor                `json:"flavors"`
-	Effects map[EffectType][]string `json:"effects"`
+	Name        string                  `json:"name"`
+	ID          int                     `json:"id"`
+	Description string                  `json:"desc"`
+	Race        Race                    `json:"race"`
+	Flavors     []Flavor                `json:"flavors"`
+	Effects     map[EffectType][]string `json:"effects"`
 }
 
 const strainSearchBasePath string = "/strains/search"
 
-// StrainSearchResults represents the results of a strain search
-type StrainSearchResults map[string]Strain
+// ListAllStrainsResult represents the results of a strain search
+type ListAllStrainsResult map[string]Strain
 
-// ListAllStrains gets a StrainSearchResult of all strains
+// ListAllStrains gets a ListAllStrainsResult of all strains
 // (please use sparingly, it is expensive to run).
-func (c *DefaultClient) ListAllStrains() (StrainSearchResults, error) {
-	strainsResults := make(StrainSearchResults)
+func (c *DefaultClient) ListAllStrains() (ListAllStrainsResult, error) {
+	strainsResults := make(ListAllStrainsResult)
 
 	findAllURL := strainSearchBasePath + "/all"
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(findAllURL)
@@ -172,10 +181,30 @@ func (c *DefaultClient) ListAllStrains() (StrainSearchResults, error) {
 }
 
 // Set the name on each Strain to the name of the key
-func populateStrainNames(strains StrainSearchResults) {
+func populateStrainNames(strains ListAllStrainsResult) {
 	for name, strain := range strains {
 		strain.Name = name
 		// Have to assign it back to the map to make it stick
 		strains[name] = strain
 	}
+}
+
+// StrainSearchResults is a slice of StrainSummary results from a search.
+type StrainSearchResults []StrainSummary
+
+// SearchStrainsByName gets a StrainSearchResult of all strains matching
+// the name passed in.
+func (c *DefaultClient) SearchStrainsByName(name string) (StrainSearchResults, error) {
+	strainsResults := make(StrainSearchResults, 0)
+
+	findAllURL := strainSearchBasePath + "/name/" + name
+	strainsResultsJSONBytes, err := c.simpleHTTPGet(findAllURL)
+
+	if err != nil {
+		return strainsResults, err
+	}
+
+	marshallErr := json.Unmarshal(strainsResultsJSONBytes, &strainsResults)
+
+	return strainsResults, marshallErr
 }
