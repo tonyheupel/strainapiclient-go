@@ -18,6 +18,9 @@ type Client interface {
 	ListAllEffects()
 	ListAllFlavors()
 	ListAllStrains()
+	SearchStrainsByName(name string)
+	SearchStrainsByRace(race Race)
+	SearchStrainsByEffect(effect Effect)
 }
 
 // DefaultClient is the default implementation of a Client for The Strain API
@@ -220,11 +223,10 @@ type SearchStrainsByRaceResult struct {
 }
 
 // SearchStrainsByRaceResults is a slice of SearchStrainsByRaceResult
-//  results
-// the name passed in.
+// results from a SearchStrainsByRace call.
 type SearchStrainsByRaceResults []SearchStrainsByRaceResult
 
-// SearchStrainsByRace gets a StrainSearchResult of all strains matching
+// SearchStrainsByRace gets a SearchStrainsByRaceResult of all strains matching
 // the Race passed in.
 func (c *DefaultClient) SearchStrainsByRace(race Race) (SearchStrainsByRaceResults, error) {
 	strainsResults := make(SearchStrainsByRaceResults, 0)
@@ -240,3 +242,35 @@ func (c *DefaultClient) SearchStrainsByRace(race Race) (SearchStrainsByRaceResul
 
 	return strainsResults, marshallErr
 }
+
+// SearchStrainsByEffectNameResult represents a single item in the results of a
+// SearchStrainsByEffectName call.
+type SearchStrainsByEffectNameResult struct {
+	Name       string `json:"name"`
+	ID         int    `json:"id"`
+	Race       Race   `json:"race"`
+	EffectName string `json:"effect"`
+}
+
+// SearchStrainsByEffectResults is a slice of SearchStrainsByEffectResult
+// results from a SearchStrainsByEffect call.
+type SearchStrainsByEffectResults []SearchStrainsByEffectNameResult
+
+// SearchStrainsByEffectName returns a SearchStrainsByEffectResults of all strains
+// with an effect that matches the Effect passed in.
+func (c *DefaultClient) SearchStrainsByEffectName(effectName string) (SearchStrainsByEffectResults, error) {
+	strainsResults := make(SearchStrainsByEffectResults, 0)
+
+	searchURL := strainSearchBasePath + "/effect/" + string(effectName)
+	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
+
+	if err != nil {
+		return strainsResults, err
+	}
+
+	marshallErr := json.Unmarshal(strainsResultsJSONBytes, &strainsResults)
+
+	return strainsResults, marshallErr
+}
+
+//

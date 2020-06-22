@@ -60,6 +60,14 @@ func commonFirstSearchStrainByRaceResult() SearchStrainsByRaceResult {
 	}
 }
 
+func commonFirstSearchStrainByEffectNameResult() SearchStrainsByEffectNameResult {
+	return SearchStrainsByEffectNameResult{
+		Name:       "Afpak",
+		ID:         1,
+		Race:       RaceHybrid,
+		EffectName: "Happy",
+	}
+}
 func TestConnect(t *testing.T) {
 	expected := true
 	if returnValue := createTestDefaultClient(t).CanConnect(); !returnValue {
@@ -134,11 +142,11 @@ func TestSearchStrainsByName(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
-	expectedFirstStrainSummary := commonFirstSearchStrainByNameResult()
+	expectedFirstStrainResult := commonFirstSearchStrainByNameResult()
 
 	allStrains, err := createTestDefaultClient(t).SearchStrainsByName("Af")
 	if err != nil {
-		t.Error("Failed trying to search strains by name:", expectedFirstStrainSummary.Name, err)
+		t.Error("Failed trying to search strains by name:", expectedFirstStrainResult.Name, err)
 	}
 
 	actualCount := len(allStrains)
@@ -149,8 +157,8 @@ func TestSearchStrainsByName(t *testing.T) {
 		strings.Replace(
 			actualStrain.Description, string([]byte{0xc2, 0xa0}), "", 0))
 
-	if actualCount == 0 || !cmp.Equal(expectedFirstStrainSummary, actualStrain) {
-		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainSummary, actualCount, actualStrain)
+	if actualCount == 0 || !cmp.Equal(expectedFirstStrainResult, actualStrain) {
+		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainResult, actualCount, actualStrain)
 	}
 }
 
@@ -158,17 +166,36 @@ func TestSearchStrainsByRace(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
-	expectedFirstStrainSummary := commonFirstSearchStrainByRaceResult()
+	expectedFirstStrainResult := commonFirstSearchStrainByRaceResult()
 
 	allStrains, err := createTestDefaultClient(t).SearchStrainsByRace(RaceHybrid)
 	if err != nil {
-		t.Error("Failed trying to search strains by name:", expectedFirstStrainSummary.Name, err)
+		t.Error("Failed trying to search strains by name:", expectedFirstStrainResult.Name, err)
 	}
 
 	actualCount := len(allStrains)
 	actualStrain := allStrains[0]
 
-	if actualCount == 0 || !cmp.Equal(expectedFirstStrainSummary, actualStrain) {
-		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainSummary, actualCount, actualStrain)
+	if actualCount == 0 || !cmp.Equal(expectedFirstStrainResult, actualStrain) {
+		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainResult, actualCount, actualStrain)
+	}
+}
+
+func TestSearchStrainsByEffect(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
+	expectedFirstStrainResult := commonFirstSearchStrainByEffectNameResult()
+
+	allStrains, err := createTestDefaultClient(t).SearchStrainsByEffectName("Happy")
+	if err != nil {
+		t.Error("Failed trying to search strains by name:", expectedFirstStrainResult.Name, err)
+	}
+
+	actualCount := len(allStrains)
+	actualStrain := allStrains[0]
+
+	if actualCount == 0 || !cmp.Equal(expectedFirstStrainResult, actualStrain) {
+		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainResult, actualCount, actualStrain)
 	}
 }
