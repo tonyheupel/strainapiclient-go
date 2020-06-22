@@ -252,14 +252,14 @@ type SearchStrainsByEffectNameResult struct {
 	EffectName string `json:"effect"`
 }
 
-// SearchStrainsByEffectResults is a slice of SearchStrainsByEffectResult
+// SearchStrainsByEffectNameResults is a slice of SearchStrainsByEffectResult
 // results from a SearchStrainsByEffect call.
-type SearchStrainsByEffectResults []SearchStrainsByEffectNameResult
+type SearchStrainsByEffectNameResults []SearchStrainsByEffectNameResult
 
-// SearchStrainsByEffectName returns a SearchStrainsByEffectResults of all strains
+// SearchStrainsByEffectName returns a SearchStrainsByEffectNameResults of all strains
 // with an effect that matches the Effect passed in.
-func (c *DefaultClient) SearchStrainsByEffectName(effectName string) (SearchStrainsByEffectResults, error) {
-	strainsResults := make(SearchStrainsByEffectResults, 0)
+func (c *DefaultClient) SearchStrainsByEffectName(effectName string) (SearchStrainsByEffectNameResults, error) {
+	strainsResults := make(SearchStrainsByEffectNameResults, 0)
 
 	searchURL := strainSearchBasePath + "/effect/" + string(effectName)
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
@@ -273,4 +273,32 @@ func (c *DefaultClient) SearchStrainsByEffectName(effectName string) (SearchStra
 	return strainsResults, marshallErr
 }
 
-//
+// SearchStrainsByFlavorResult represents a single item in the results of a
+// SearchStrainsByFlavor call.
+type SearchStrainsByFlavorResult struct {
+	Name   string `json:"name"`
+	ID     int    `json:"id"`
+	Race   Race   `json:"race"`
+	Flavor Flavor `json:"flavor"`
+}
+
+// SearchStrainsByFlavorResults is a slice of SearchStrainsByFlavorResult
+// results from a SearchStrainsByEffect call.
+type SearchStrainsByFlavorResults []SearchStrainsByFlavorResult
+
+// SearchStrainsByFlavor returns a SearchStrainsByFlavorResults of all strains
+// with a flavor that matches the Flavor passed in.
+func (c *DefaultClient) SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFlavorResults, error) {
+	strainsResults := make(SearchStrainsByFlavorResults, 0)
+
+	searchURL := strainSearchBasePath + "/flavor/" + string(flavor)
+	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
+
+	if err != nil {
+		return strainsResults, err
+	}
+
+	marshallErr := json.Unmarshal(strainsResultsJSONBytes, &strainsResults)
+
+	return strainsResults, marshallErr
+}
