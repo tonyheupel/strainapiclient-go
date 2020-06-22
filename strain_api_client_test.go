@@ -68,6 +68,15 @@ func commonFirstSearchStrainByEffectNameResult() SearchStrainsByEffectNameResult
 		EffectName: "Happy",
 	}
 }
+
+func commonFirstSearchStrainByFlavorResult() SearchStrainsByFlavorResult {
+	return SearchStrainsByFlavorResult{
+		Name:   "Afpak",
+		ID:     1,
+		Race:   RaceHybrid,
+		Flavor: "Earthy",
+	}
+}
 func TestConnect(t *testing.T) {
 	expected := true
 	if returnValue := createTestDefaultClient(t).CanConnect(); !returnValue {
@@ -170,7 +179,7 @@ func TestSearchStrainsByRace(t *testing.T) {
 
 	allStrains, err := createTestDefaultClient(t).SearchStrainsByRace(RaceHybrid)
 	if err != nil {
-		t.Error("Failed trying to search strains by name:", expectedFirstStrainResult.Name, err)
+		t.Error("Failed trying to search strains by race:", expectedFirstStrainResult.Name, err)
 	}
 
 	actualCount := len(allStrains)
@@ -181,13 +190,32 @@ func TestSearchStrainsByRace(t *testing.T) {
 	}
 }
 
-func TestSearchStrainsByEffect(t *testing.T) {
+func TestSearchStrainsByEffectName(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
 	expectedFirstStrainResult := commonFirstSearchStrainByEffectNameResult()
 
 	allStrains, err := createTestDefaultClient(t).SearchStrainsByEffectName("Happy")
+	if err != nil {
+		t.Error("Failed trying to search strains by effect name:", expectedFirstStrainResult.Name, err)
+	}
+
+	actualCount := len(allStrains)
+	actualStrain := allStrains[0]
+
+	if actualCount == 0 || !cmp.Equal(expectedFirstStrainResult, actualStrain) {
+		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainResult, actualCount, actualStrain)
+	}
+}
+
+func TestSearchStrainsByFlavor(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
+	expectedFirstStrainResult := commonFirstSearchStrainByFlavorResult()
+
+	allStrains, err := createTestDefaultClient(t).SearchStrainsByFlavor("Earthy")
 	if err != nil {
 		t.Error("Failed trying to search strains by name:", expectedFirstStrainResult.Name, err)
 	}
