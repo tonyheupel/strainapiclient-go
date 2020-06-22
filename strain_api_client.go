@@ -19,7 +19,10 @@ type Client interface {
 	ListAllStrains()
 	SearchStrainsByName(name string)
 	SearchStrainsByRace(race Race)
-	SearchStrainsByEffect(effect Effect)
+	SearchStrainsByEffectName(effectName string)
+	SearchStrainsByFlavor(flavor Flavor)
+	GetStrainDescriptionByStrainD(id int)
+	GetStrainFavorsByStrainID(id int)
 }
 
 // DefaultClient is the default implementation of a Client for The Strain API
@@ -305,23 +308,32 @@ func (c *DefaultClient) SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFla
 
 const strainDataBasePath string = strainsBasePath + "/data"
 
-// GetStrainDescriptionByID retrieves the Description field for the
+func (c *DefaultClient) getStrainDataByID(dataElementName string, id int) ([]byte, error) {
+	url := fmt.Sprintf("%s/%s/%d", strainDataBasePath, dataElementName, id)
+
+	return c.simpleHTTPGet(url)
+}
+
+// GetStrainDescriptionByStrainID retrieves the Description field for the
 // Strain with the ID passed in.
-func (c *DefaultClient) GetStrainDescriptionByID(id int) (string, error) {
+func (c *DefaultClient) GetStrainDescriptionByStrainID(id int) (string, error) {
 
 	description := ""
-	descriptionInterface, err := c.getStrainDataByID("desc", id)
+	descriptionResultBytes, err := c.getStrainDataByID("desc", id)
 
 	if err != nil {
 		return "", fmt.Errorf("Problem getting the description for strain with ID %d: %s", id, err)
 	}
 
-	switch descriptionInterface.(type) {
-	case string:
-		description = descriptionInterface.(string)
-	default:
-		return "", fmt.Errorf("Unable to parse description for strain with ID %d", id)
+	result := make(map[string]string)
+
+	marshallErr := json.Unmarshal(descriptionResultBytes, &result)
+
+	if marshallErr != nil {
+		return "", marshallErr
 	}
+
+	description = result["desc"]
 
 	if description == "" {
 		return "", fmt.Errorf("Unable to find description in result")
@@ -330,22 +342,20 @@ func (c *DefaultClient) GetStrainDescriptionByID(id int) (string, error) {
 	return description, nil
 }
 
-func (c *DefaultClient) getStrainDataByID(dataElementName string, id int) (interface{}, error) {
-	url := fmt.Sprintf("%s/%s/%d", strainDataBasePath, dataElementName, id)
+// GetStrainFavorsByStrainID returns a slice of Flavors for
+// the Strain of the id passed in.
+func (c *DefaultClient) GetStrainFavorsByStrainID(id int) ([]Flavor, error) {
+	flavors := make([]Flavor, 0)
 
-	resultsBytes, err := c.simpleHTTPGet(url)
-
+	flavorsResultBytes, err := c.getStrainDataByID("flavors", id)
 	if err != nil {
-		return "", err
+		return flavors, fmt.Errorf("Problem getting flavors for stain with ID %d: %s", id, err)
 	}
 
-	result := make(map[string]interface{})
-
-	marshallErr := json.Unmarshal(resultsBytes, &result)
-
+	marshallErr := json.Unmarshal(flavorsResultBytes, &flavors)
 	if marshallErr != nil {
-		return nil, marshallErr
+		return flavors, fmt.Errorf("Problem parsing flavors response for string with ID %d: %s\nBytes: %v", id, err, flavorsResultBytes)
 	}
 
-	return result[dataElementName], nil
+	return flavors, nil
 }
