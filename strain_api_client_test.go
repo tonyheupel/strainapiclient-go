@@ -1,7 +1,6 @@
 package strainapiclient
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -17,16 +16,6 @@ func createTestDefaultClient(t *testing.T) *DefaultClient {
 	}
 
 	return NewDefaultClient(apiKey)
-}
-
-func readAPIKeyFile(environment string) (string, error) {
-	apiKeyBytes, err := ioutil.ReadFile("./api_key_" + environment)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(apiKeyBytes), nil
 }
 
 func commonFirstStrain() Strain {
