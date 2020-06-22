@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -20,7 +19,11 @@ type Client interface {
 	ListAllStrains()
 	SearchStrainsByName(name string)
 	SearchStrainsByRace(race Race)
-	SearchStrainsByEffect(effect Effect)
+	SearchStrainsByEffectName(effectName string)
+	SearchStrainsByFlavor(flavor Flavor)
+	GetStrainDescriptionByStrainD(id int)
+	GetStrainFavorsByStrainID(id int)
+	GetStrainEffectsByStrainID(id int)
 }
 
 // DefaultClient is the default implementation of a Client for The Strain API
@@ -50,8 +53,8 @@ func (c *DefaultClient) simpleHTTPGet(restOfURLPath string) ([]byte, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("There was a problem connecting to the api: %s", err)
-		return make([]byte, 0), err
+		specificError := fmt.Errorf("There was a problem connecting to the api: %s", err)
+		return make([]byte, 0), specificError
 	}
 
 	defer resp.Body.Close()
@@ -63,8 +66,8 @@ func (c *DefaultClient) simpleHTTPGet(restOfURLPath string) ([]byte, error) {
 	}
 
 	if bodyErr != nil || err != nil {
-		log.Printf("There was a problem reading the body of the response: %s", err)
-		return make([]byte, 0), err
+		parsingError := fmt.Errorf("There was a problem reading the body of the response: %s", err)
+		return make([]byte, 0), parsingError
 	}
 
 	return body, nil
@@ -151,7 +154,8 @@ type Strain struct {
 	Effects     map[EffectType][]string `json:"effects"`
 }
 
-const strainSearchBasePath string = "/strains/search"
+const strainsBasePath string = "/strains"
+const strainSearchBasePath string = strainsBasePath + "/search"
 
 // ListAllStrainsResult represents the results of a strain search
 type ListAllStrainsResult map[string]Strain
@@ -301,4 +305,106 @@ func (c *DefaultClient) SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFla
 	marshallErr := json.Unmarshal(strainsResultsJSONBytes, &strainsResults)
 
 	return strainsResults, marshallErr
+}
+
+const strainDataBasePath string = strainsBasePath + "/data"
+
+func (c *DefaultClient) getStrainDataByID(dataElementName string, id int) ([]byte, error) {
+	url := fmt.Sprintf("%s/%s/%d", strainDataBasePath, dataElementName, id)
+
+	return c.simpleHTTPGet(url)
+}
+
+// GetStrainDescriptionByStrainID retrieves the Description field for the
+// Strain with the ID passed in.
+func (c *DefaultClient) GetStrainDescriptionByStrainID(id int) (string, error) {
+
+	description := ""
+	descriptionResultBytes, err := c.getStrainDataByID("desc", id)
+
+	if err != nil {
+		return "", fmt.Errorf("Problem getting the description for strain with ID %d: %s", id, err)
+	}
+
+	result := make(map[string]string)
+
+	marshallErr := json.Unmarshal(descriptionResultBytes, &result)
+
+	if marshallErr != nil {
+		return "", marshallErr
+	}
+
+	description = result["desc"]
+
+	if description == "" {
+		return "", fmt.Errorf("Unable to find description in result")
+	}
+
+	return description, nil
+}
+
+// GetStrainFavorsByStrainID returns a slice of Flavors for
+// the Strain of the id passed in.
+func (c *DefaultClient) GetStrainFavorsByStrainID(id int) ([]Flavor, error) {
+	flavors := make([]Flavor, 0)
+
+	flavorsResultBytes, err := c.getStrainDataByID("flavors", id)
+	if err != nil {
+		return flavors, fmt.Errorf("Problem getting flavors for stain with ID %d: %s", id, err)
+	}
+
+	marshallErr := json.Unmarshal(flavorsResultBytes, &flavors)
+	if marshallErr != nil {
+		return flavors, fmt.Errorf("Problem parsing flavors response for string with ID %d: %s\nBytes: %v", id, err, flavorsResultBytes)
+	}
+
+	return flavors, nil
+}
+
+// EffectsByEffectType represents a map of Effect slices, keyed by EffectType.
+type EffectsByEffectType map[EffectType][]Effect
+
+// GetStrainEffectsByStrainID returns an EffectsByEffectType.
+// Use EffectTypePositive, EffectTypeNegative, and EffectTypeMedical for the keys
+// and the values are a slice of Effect items.
+func (c *DefaultClient) GetStrainEffectsByStrainID(id int) (map[EffectType][]Effect, error) {
+	effects := make(EffectsByEffectType)
+	effectsMap := make(map[string][]string)
+
+	effectsResultBytes, err := c.getStrainDataByID("effects", id)
+	if err != nil {
+		return effects, fmt.Errorf("Problem retrieving effects for Strain with ID %d: %s", id, err)
+	}
+
+	marshallErr := json.Unmarshal(effectsResultBytes, &effectsMap)
+	if marshallErr != nil {
+		return effects, fmt.Errorf("Problem parsing effects for Strain with ID %d: %s", id, marshallErr)
+	}
+
+	effects, convertErr := effectMapToEffectsByEffectType(effectsMap)
+	if convertErr != nil {
+		return effects, fmt.Errorf("Problem converting effects map to EffectsByEffectType for Strain with ID %d: %s", id, convertErr)
+	}
+
+	return effects, nil
+}
+
+// effectMapToEffectsByEffectType converts the JSON object we get back from the API
+// to the required type.  Maybe could convert this to an unmarshaller.
+func effectMapToEffectsByEffectType(effectsMap map[string][]string) (effectsByEffectType EffectsByEffectType, err error) {
+	effectsByEffectType = make(EffectsByEffectType)
+
+	for effectTypeString, effectNames := range effectsMap {
+		effectType := EffectType(effectTypeString)
+		effects := make([]Effect, len(effectNames))
+
+		for index, name := range effectNames {
+			effects[index] = Effect{Name: name, Type: effectType}
+		}
+
+		effectsByEffectType[effectType] = effects
+	}
+
+	// Likely to change converting of type to allow for errors if unknown type is used.
+	return effectsByEffectType, err
 }
