@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 const baseURLHost string = "strainapi.evanbusse.com"
@@ -309,25 +308,44 @@ const strainDataBasePath string = strainsBasePath + "/data"
 // GetStrainDescriptionByID retrieves the Description field for the
 // Strain with the ID passed in.
 func (c *DefaultClient) GetStrainDescriptionByID(id int) (string, error) {
-	url := strainDataBasePath + "/desc/" + strconv.Itoa(id)
-	descriptionResultsBytes, err := c.simpleHTTPGet(url)
+
+	description := ""
+	descriptionInterface, err := c.getStrainDataByID("desc", id)
+
+	if err != nil {
+		return "", fmt.Errorf("Problem getting the description for strain with ID %d: %s", id, err)
+	}
+
+	switch descriptionInterface.(type) {
+	case string:
+		description = descriptionInterface.(string)
+	default:
+		return "", fmt.Errorf("Unable to parse description for strain with ID %d", id)
+	}
+
+	if description == "" {
+		return "", fmt.Errorf("Unable to find description in result")
+	}
+
+	return description, nil
+}
+
+func (c *DefaultClient) getStrainDataByID(dataElementName string, id int) (interface{}, error) {
+	url := fmt.Sprintf("%s/%s/%d", strainDataBasePath, dataElementName, id)
+
+	resultsBytes, err := c.simpleHTTPGet(url)
 
 	if err != nil {
 		return "", err
 	}
 
-	descriptionResult := make(map[string]string)
+	result := make(map[string]interface{})
 
-	marshallErr := json.Unmarshal(descriptionResultsBytes, &descriptionResult)
+	marshallErr := json.Unmarshal(resultsBytes, &result)
 
 	if marshallErr != nil {
-		return "", marshallErr
+		return nil, marshallErr
 	}
 
-	description := descriptionResult["desc"]
-
-	if description == "" {
-		return "", fmt.Errorf("Unable to find description in result")
-	}
-	return description, nil
+	return result[dataElementName], nil
 }
