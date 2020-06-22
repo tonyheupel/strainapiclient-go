@@ -152,7 +152,7 @@ const strainSearchBasePath string = "/strains/search"
 // StrainSearchResults represents the results of a strain search
 type StrainSearchResults map[string]Strain
 
-// ListAllStrains gets a list of all strings
+// ListAllStrains gets a StrainSearchResult of all strains
 // (please use sparingly, it is expensive to run).
 func (c *DefaultClient) ListAllStrains() (StrainSearchResults, error) {
 	strainsResults := make(StrainSearchResults)
