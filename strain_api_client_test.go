@@ -29,6 +29,29 @@ func readAPIKeyFile(environment string) (string, error) {
 	return string(apiKeyBytes), nil
 }
 
+func commonFirstStrain() Strain {
+	return Strain{
+		Name:    "Afpak",
+		ID:      1,
+		Race:    RaceHybrid,
+		Flavors: []Flavor{"Earthy", "Chemical", "Pine"},
+		Effects: map[EffectType][]string{
+			"positive": {"Relaxed", "Hungry", "Happy", "Sleepy"},
+			"negative": {"Dizzy"},
+			"medical":  {"Depression", "Insomnia", "Pain", "Stress", "Lack of Appetite"},
+		},
+	}
+}
+
+func commonFirstStrainSummary() StrainSummary {
+	return StrainSummary{
+		Name:        "Afpak",
+		ID:          1,
+		Race:        RaceHybrid,
+		Description: "Afpak, named for its direct Afghani and Pakistani landrace heritage, is a beautiful indica-dominant hybrid with light green and deep bluish purple leaves. The taste and aroma are floral with a touch of lemon, making the inhale light and smooth. Its effects start in the stomach by activating the appetite. There is also a potent relaxation that starts in the head and face, and gradually sinks down into the body. Enjoy this strain if you’re suffering from stress, mild physical discomfort, or having difficulty eating.",
+	}
+}
+
 func TestConnect(t *testing.T) {
 	expected := true
 	if returnValue := createTestDefaultClient(t).CanConnect(); !returnValue {
@@ -84,17 +107,7 @@ func TestListAllStrains(t *testing.T) {
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
 	expectedCount := 1970
-	expectedFirstStrain := Strain{
-		Name:    "Afpak",
-		ID:      1,
-		Race:    RaceHybrid,
-		Flavors: []Flavor{"Earthy", "Chemical", "Pine"},
-		Effects: map[EffectType][]string{
-			"positive": {"Relaxed", "Hungry", "Happy", "Sleepy"},
-			"negative": {"Dizzy"},
-			"medical":  {"Depression", "Insomnia", "Pain", "Stress", "Lack of Appetite"},
-		},
-	}
+	expectedFirstStrain := commonFirstStrain()
 
 	allStrains, err := createTestDefaultClient(t).ListAllStrains()
 	if err != nil {
@@ -112,18 +125,12 @@ func TestListAllStrains(t *testing.T) {
 func TestSearchStrainsByName(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
-	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
-	expectedCount := 18
-	expectedFirstStrain := StrainSummary{
-		Name:        "Afpak",
-		ID:          1,
-		Race:        RaceHybrid,
-		Description: "Afpak, named for its direct Afghani and Pakistani landrace heritage, is a beautiful indica-dominant hybrid with light green and deep bluish purple leaves. The taste and aroma are floral with a touch of lemon, making the inhale light and smooth. Its effects start in the stomach by activating the appetite. There is also a potent relaxation that starts in the head and face, and gradually sinks down into the body. Enjoy this strain if you’re suffering from stress, mild physical discomfort, or having difficulty eating.",
-	}
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
+	expectedFirstStrainSummary := commonFirstStrainSummary()
 
 	allStrains, err := createTestDefaultClient(t).SearchStrainsByName("Af")
 	if err != nil {
-		t.Error("Failed trying to search strains by name:", expectedFirstStrain.Name, err)
+		t.Error("Failed trying to search strains by name:", expectedFirstStrainSummary.Name, err)
 	}
 
 	actualCount := len(allStrains)
@@ -134,7 +141,30 @@ func TestSearchStrainsByName(t *testing.T) {
 		strings.Replace(
 			actualStrain.Description, string([]byte{0xc2, 0xa0}), "", 0))
 
-	if actualCount != expectedCount || !cmp.Equal(expectedFirstStrain, actualStrain) {
-		t.Errorf("Expected %d strains with %v as the first, got %d results of %v instead.", expectedCount, expectedFirstStrain, actualCount, actualStrain)
+	if actualCount == 0 || !cmp.Equal(expectedFirstStrainSummary, actualStrain) {
+		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainSummary, actualCount, actualStrain)
+	}
+}
+
+func TestSearchStrainsByRace(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded first result
+	expectedFirstStrainSummary := commonFirstStrainSummary()
+
+	allStrains, err := createTestDefaultClient(t).SearchStrainsByRace(RaceHybrid)
+	if err != nil {
+		t.Error("Failed trying to search strains by name:", expectedFirstStrainSummary.Name, err)
+	}
+
+	actualCount := len(allStrains)
+	actualStrain := allStrains[0]
+
+	// This search does not set the Description,
+	// so blank out the Descipriton on the expected item.
+	expectedFirstStrainSummary.Description = ""
+
+	if actualCount == 0 || !cmp.Equal(expectedFirstStrainSummary, actualStrain) {
+		t.Errorf("Expected at least one strain with %v as the first, got %d results of %v instead.", expectedFirstStrainSummary, actualCount, actualStrain)
 	}
 }

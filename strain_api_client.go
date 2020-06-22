@@ -197,8 +197,25 @@ type StrainSearchResults []StrainSummary
 func (c *DefaultClient) SearchStrainsByName(name string) (StrainSearchResults, error) {
 	strainsResults := make(StrainSearchResults, 0)
 
-	findAllURL := strainSearchBasePath + "/name/" + name
-	strainsResultsJSONBytes, err := c.simpleHTTPGet(findAllURL)
+	searchURL := strainSearchBasePath + "/name/" + name
+	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
+
+	if err != nil {
+		return strainsResults, err
+	}
+
+	marshallErr := json.Unmarshal(strainsResultsJSONBytes, &strainsResults)
+
+	return strainsResults, marshallErr
+}
+
+// SearchStrainsByRace gets a StrainSearchResult of all strains matching
+// the Race passed in.
+func (c *DefaultClient) SearchStrainsByRace(race Race) (StrainSearchResults, error) {
+	strainsResults := make(StrainSearchResults, 0)
+
+	searchURL := strainSearchBasePath + "/race/" + string(race)
+	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
 
 	if err != nil {
 		return strainsResults, err
