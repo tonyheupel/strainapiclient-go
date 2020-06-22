@@ -1,7 +1,5 @@
 # The Strain API Go Module
 
-[![build status](
-  http://img.shields.io/travis/tchype/repo/master.svg?style=flat)](
- https://travis-ci.org/github/tchype/strainapiclient-go)
+[![Build Status](https://travis-ci.org/tchype/strainapiclient-go.svg?branch=master)](https://travis-ci.org/tchype/strainapiclient-go)
 
  More to come...
