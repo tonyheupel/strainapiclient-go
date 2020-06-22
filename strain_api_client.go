@@ -23,6 +23,7 @@ type Client interface {
 	SearchStrainsByFlavor(flavor Flavor)
 	GetStrainDescriptionByStrainD(id int)
 	GetStrainFavorsByStrainID(id int)
+	GetStrainEffectsByStrainID(id int)
 }
 
 // DefaultClient is the default implementation of a Client for The Strain API
@@ -358,4 +359,52 @@ func (c *DefaultClient) GetStrainFavorsByStrainID(id int) ([]Flavor, error) {
 	}
 
 	return flavors, nil
+}
+
+// EffectsByEffectType represents a map of Effect slices, keyed by EffectType.
+type EffectsByEffectType map[EffectType][]Effect
+
+// GetStrainEffectsByStrainID returns an EffectsByEffectType.
+// Use EffectTypePositive, EffectTypeNegative, and EffectTypeMedical for the keys
+// and the values are a slice of Effect items.
+func (c *DefaultClient) GetStrainEffectsByStrainID(id int) (map[EffectType][]Effect, error) {
+	effects := make(EffectsByEffectType)
+	effectsMap := make(map[string][]string)
+
+	effectsResultBytes, err := c.getStrainDataByID("effects", id)
+	if err != nil {
+		return effects, fmt.Errorf("Problem retrieving effects for Strain with ID %d: %s", id, err)
+	}
+
+	marshallErr := json.Unmarshal(effectsResultBytes, &effectsMap)
+	if marshallErr != nil {
+		return effects, fmt.Errorf("Problem parsing effects for Strain with ID %d: %s", id, marshallErr)
+	}
+
+	effects, convertErr := effectMapToEffectsByEffectType(effectsMap)
+	if convertErr != nil {
+		return effects, fmt.Errorf("Problem converting effects map to EffectsByEffectType for Strain with ID %d: %s", id, convertErr)
+	}
+
+	return effects, nil
+}
+
+// effectMapToEffectsByEffectType converts the JSON object we get back from the API
+// to the required type.  Maybe could convert this to an unmarshaller.
+func effectMapToEffectsByEffectType(effectsMap map[string][]string) (effectsByEffectType EffectsByEffectType, err error) {
+	effectsByEffectType = make(EffectsByEffectType)
+
+	for effectTypeString, effectNames := range effectsMap {
+		effectType := EffectType(effectTypeString)
+		effects := make([]Effect, len(effectNames))
+
+		for index, name := range effectNames {
+			effects[index] = Effect{Name: name, Type: effectType}
+		}
+
+		effectsByEffectType[effectType] = effects
+	}
+
+	// Likely to change converting of type to allow for errors if unknown type is used.
+	return effectsByEffectType, err
 }

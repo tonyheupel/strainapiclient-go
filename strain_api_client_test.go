@@ -262,10 +262,50 @@ func TestGetStrainFavorsByStrainID(t *testing.T) {
 	actualFlavors, err := createTestDefaultClient(t).GetStrainFavorsByStrainID(strainID)
 
 	if err != nil {
-		t.Errorf("Failed trying to get flavors  for strain with ID of %d: %s", strainID, err)
+		t.Errorf("Failed trying to get flavors for strain with ID of %d: %s", strainID, err)
 	}
 
 	if !reflect.DeepEqual(actualFlavors, expectedFlavors) {
 		t.Errorf("For strain with ID %d, expected '%v' but got '%v'", strainID, expectedFlavors, actualFlavors)
+	}
+}
+
+func TestGetStrainEffectsByStrainID(t *testing.T) {
+	// These are purposefully dumb tests that should fail as new data gets added
+	// but using for now for SOMETHING.
+	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
+
+	expectedPositiveEffects := []Effect{
+		{Name: "Relaxed", Type: EffectTypePositive},
+		{Name: "Happy", Type: EffectTypePositive},
+		{Name: "Hungry", Type: EffectTypePositive},
+		{Name: "Sleepy", Type: EffectTypePositive},
+	}
+	expectedNegativeEffects := []Effect{
+		{Name: "Dizzy", Type: EffectTypeNegative},
+	}
+
+	expectedMedicalEffects := []Effect{
+		{Name: "Depression", Type: EffectTypeMedical},
+		{Name: "Stress", Type: EffectTypeMedical},
+		{Name: "Lack of Appetite", Type: EffectTypeMedical},
+		{Name: "Insomnia", Type: EffectTypeMedical},
+		{Name: "Pain", Type: EffectTypeMedical},
+	}
+
+	expectedEffects := make(map[EffectType][]Effect)
+	expectedEffects[EffectTypePositive] = expectedPositiveEffects
+	expectedEffects[EffectTypeNegative] = expectedNegativeEffects
+	expectedEffects[EffectTypeMedical] = expectedMedicalEffects
+
+	strainID := 1
+	actualEffects, err := createTestDefaultClient(t).GetStrainEffectsByStrainID(strainID)
+
+	if err != nil {
+		t.Errorf("Failed trying to get effects for strain with ID of %d: %s", strainID, err)
+	}
+
+	if !reflect.DeepEqual(actualEffects, expectedEffects) {
+		t.Errorf("For strain with ID %d, expected effects '%v' but got '%v'", strainID, expectedEffects, actualEffects)
 	}
 }
