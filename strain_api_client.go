@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -51,8 +50,8 @@ func (c *DefaultClient) simpleHTTPGet(restOfURLPath string) ([]byte, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("There was a problem connecting to the api: %s", err)
-		return make([]byte, 0), err
+		specificError := fmt.Errorf("There was a problem connecting to the api: %s", err)
+		return make([]byte, 0), specificError
 	}
 
 	defer resp.Body.Close()
@@ -64,8 +63,8 @@ func (c *DefaultClient) simpleHTTPGet(restOfURLPath string) ([]byte, error) {
 	}
 
 	if bodyErr != nil || err != nil {
-		log.Printf("There was a problem reading the body of the response: %s", err)
-		return make([]byte, 0), err
+		parsingError := fmt.Errorf("There was a problem reading the body of the response: %s", err)
+		return make([]byte, 0), parsingError
 	}
 
 	return body, nil
