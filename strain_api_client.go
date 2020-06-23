@@ -24,18 +24,36 @@ type Client interface {
 	GetStrainDescriptionByStrainID(id int) (string, error)
 	GetStrainFavorsByStrainID(id int) ([]Flavor, error)
 	GetStrainEffectsByStrainID(id int) (EffectsByEffectType, error)
+
+	// SetHandleResourceRequestFunc sets the function used to handle requests
+	// and returns the previous value of the *HandleResourceRequestFunc.
+	SetHandleResourceRequestFunc(f HandleResourceRequestFunc) HandleResourceRequestFunc
 }
+
+// HandleResourceRequestFunc is the signature of a function that can handle
+// a resource request to the client.
+type HandleResourceRequestFunc func(resourcePath string) ([]byte, error)
 
 // DefaultClient is the default implementation of a Client for The Strain API
 type DefaultClient struct {
-	apiKey string
+	apiKey                     string
+	resourceRequestHandlerFunc HandleResourceRequestFunc
 }
 
 // NewDefaultClient creates a new DefaultClient with the apiKey passed in.
 func NewDefaultClient(apiKey string) *DefaultClient {
 	client := &DefaultClient{apiKey: apiKey}
-
+	client.resourceRequestHandlerFunc = simpleHTTPGetForFullPath
 	return client
+}
+
+// SetHandleResourceRequestFunc sets a new request handler for the DefaultClient
+// (including any custom function that matches the HandleResrourceRequestFunc signature)
+// and returns the value that was previously used.
+func (c *DefaultClient) SetHandleResourceRequestFunc(f HandleResourceRequestFunc) HandleResourceRequestFunc {
+	current := c.resourceRequestHandlerFunc
+	c.resourceRequestHandlerFunc = f
+	return current
 }
 
 // simpleHTTPGet is just a simple wrapper for getting basic
@@ -43,9 +61,18 @@ func NewDefaultClient(apiKey string) *DefaultClient {
 // It uses the base url of the API and appends the string
 // passed in to the path (you must add a leading '/').
 func (c *DefaultClient) simpleHTTPGet(restOfURLPath string) ([]byte, error) {
-	req, err := http.NewRequest("GET", baseURL+"/"+c.apiKey+restOfURLPath, nil)
+	return c.resourceRequestHandlerFunc(baseURL + "/" + c.apiKey + restOfURLPath)
+}
+
+// simpleHTTPGetForFullPath is the default implementation of a
+// HandleRsourceRequestFunc.  This implementation makes an HTTP(S)
+// call to the DefaultClient's API.  You can override this
+// implementation by making your own HandleResourceReqeustFunc
+// and set it using the SetHandleResourceRequestFunc() function.
+func simpleHTTPGetForFullPath(path string) ([]byte, error) {
+	req, err := http.NewRequest("GET", path, nil)
 	req.Header.Set("Host", baseURLHost)
-	req.Header.Set("User-Agent", "Tony fun")
+	req.Header.Set("User-Agent", "strain-api-client-go/v1")
 
 	client := http.Client{
 		Timeout: 0,

@@ -1,6 +1,8 @@
 package strainapiclient
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -304,4 +306,33 @@ func TestGetStrainEffectsByStrainID(t *testing.T) {
 	if !reflect.DeepEqual(actualEffects, expectedEffects) {
 		t.Errorf("For strain with ID %d, expected effects '%v' but got '%v'", strainID, expectedEffects, actualEffects)
 	}
+}
+
+func TestSetHandleResourceReqeustFunc(t *testing.T) {
+	var mockHandler HandleResourceRequestFunc = mockHandleResourceReqeustFunc
+
+	defaultClient := createTestDefaultClient(t)
+	apiKey := defaultClient.apiKey
+
+	var client Client = defaultClient
+	_ = client.SetHandleResourceRequestFunc(mockHandler)
+
+	effectName := "Test Effect Name"
+	expectedPath := fmt.Sprintf("https://%s/%s%s/effect/%s", baseURLHost, apiKey, strainSearchBasePath, effectName)
+
+	_, err := client.SearchStrainsByEffectName(effectName)
+
+	if err == nil {
+		t.Errorf("Expected path: '%s' But got nil.", expectedPath)
+	}
+
+	if err.Error() != expectedPath {
+		t.Errorf("Expected path: '%s'\nBut got path:  '%s'", expectedPath, err.Error())
+	}
+
+}
+
+func mockHandleResourceReqeustFunc(path string) ([]byte, error) {
+	// returns the path as an error as well as the byte array
+	return []byte(path), errors.New(path)
 }
