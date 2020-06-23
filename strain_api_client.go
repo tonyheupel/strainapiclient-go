@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 const baseURLHost string = "strainapi.evanbusse.com"
@@ -22,7 +23,7 @@ type Client interface {
 	SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFlavorResults, error)
 	SearchStrainsByEffectName(effectName string) (SearchStrainsByEffectNameResults, error)
 	GetStrainDescriptionByStrainID(id int) (string, error)
-	GetStrainFavorsByStrainID(id int) ([]Flavor, error)
+	GetStrainFlavorsByStrainID(id int) ([]Flavor, error)
 	GetStrainEffectsByStrainID(id int) (EffectsByEffectType, error)
 
 	// SetHandleResourceRequestFunc sets the function used to handle requests
@@ -262,7 +263,7 @@ type SearchStrainsByRaceResults []SearchStrainsByRaceResult
 func (c *DefaultClient) SearchStrainsByRace(race Race) (SearchStrainsByRaceResults, error) {
 	strainsResults := make(SearchStrainsByRaceResults, 0)
 
-	searchURL := strainSearchBasePath + "/race/" + string(race)
+	searchURL := strainSearchBasePath + "/race/" + url.PathEscape(string(race))
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
 
 	if err != nil {
@@ -292,7 +293,7 @@ type SearchStrainsByEffectNameResults []SearchStrainsByEffectNameResult
 func (c *DefaultClient) SearchStrainsByEffectName(effectName string) (SearchStrainsByEffectNameResults, error) {
 	strainsResults := make(SearchStrainsByEffectNameResults, 0)
 
-	searchURL := strainSearchBasePath + "/effect/" + string(effectName)
+	searchURL := strainSearchBasePath + "/effect/" + url.PathEscape(string(effectName))
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
 
 	if err != nil {
@@ -322,7 +323,7 @@ type SearchStrainsByFlavorResults []SearchStrainsByFlavorResult
 func (c *DefaultClient) SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFlavorResults, error) {
 	strainsResults := make(SearchStrainsByFlavorResults, 0)
 
-	searchURL := strainSearchBasePath + "/flavor/" + string(flavor)
+	searchURL := strainSearchBasePath + "/flavor/" + url.PathEscape(string(flavor))
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
 
 	if err != nil {
@@ -370,9 +371,9 @@ func (c *DefaultClient) GetStrainDescriptionByStrainID(id int) (string, error) {
 	return description, nil
 }
 
-// GetStrainFavorsByStrainID returns a slice of Flavors for
+// GetStrainFlavorsByStrainID returns a slice of Flavors for
 // the Strain of the id passed in.
-func (c *DefaultClient) GetStrainFavorsByStrainID(id int) ([]Flavor, error) {
+func (c *DefaultClient) GetStrainFlavorsByStrainID(id int) ([]Flavor, error) {
 	flavors := make([]Flavor, 0)
 
 	flavorsResultBytes, err := c.getStrainDataByID("flavors", id)

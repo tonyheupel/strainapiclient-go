@@ -3,6 +3,7 @@ package strainapiclient
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
@@ -249,7 +250,7 @@ func TestGetStrainDescriptionByStrainID(t *testing.T) {
 	}
 }
 
-func TestGetStrainFavorsByStrainID(t *testing.T) {
+func TestGetStrainFlavorsByStrainID(t *testing.T) {
 	// These are purposefully dumb tests that should fail as new data gets added
 	// but using for now for SOMETHING.
 	// Bad things about it: 1) live HTTP calls, 2) hard-coded count results, 3) hard-coded first result
@@ -257,7 +258,7 @@ func TestGetStrainFavorsByStrainID(t *testing.T) {
 	expectedFlavors := []Flavor{"Earthy", "Chemical", "Pine"}
 
 	strainID := 1
-	actualFlavors, err := client.GetStrainFavorsByStrainID(strainID)
+	actualFlavors, err := client.GetStrainFlavorsByStrainID(strainID)
 
 	if err != nil {
 		t.Errorf("Failed trying to get flavors for strain with ID of %d: %s", strainID, err)
@@ -318,7 +319,7 @@ func TestSetHandleResourceReqeustFunc(t *testing.T) {
 	_ = client.SetHandleResourceRequestFunc(mockHandler)
 
 	effectName := "Test Effect Name"
-	expectedPath := fmt.Sprintf("https://%s/%s%s/effect/%s", baseURLHost, apiKey, strainSearchBasePath, effectName)
+	expectedPath := fmt.Sprintf("https://%s/%s%s/effect/%s", baseURLHost, apiKey, strainSearchBasePath, url.PathEscape(effectName))
 
 	_, err := client.SearchStrainsByEffectName(effectName)
 
