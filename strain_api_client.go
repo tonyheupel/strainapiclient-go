@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 const baseURLHost string = "strainapi.evanbusse.com"
@@ -22,7 +23,7 @@ type Client interface {
 	SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFlavorResults, error)
 	SearchStrainsByEffectName(effectName string) (SearchStrainsByEffectNameResults, error)
 	GetStrainDescriptionByStrainID(id int) (string, error)
-	GetStrainFavorsByStrainID(id int) ([]Flavor, error)
+	GetStrainFlavorsByStrainID(id int) ([]Flavor, error)
 	GetStrainEffectsByStrainID(id int) (EffectsByEffectType, error)
 
 	// SetHandleResourceRequestFunc sets the function used to handle requests
@@ -262,7 +263,7 @@ type SearchStrainsByRaceResults []SearchStrainsByRaceResult
 func (c *DefaultClient) SearchStrainsByRace(race Race) (SearchStrainsByRaceResults, error) {
 	strainsResults := make(SearchStrainsByRaceResults, 0)
 
-	searchURL := strainSearchBasePath + "/race/" + string(race)
+	searchURL := strainSearchBasePath + "/race/" + url.PathEscape(string(race))
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
 
 	if err != nil {
@@ -292,7 +293,7 @@ type SearchStrainsByEffectNameResults []SearchStrainsByEffectNameResult
 func (c *DefaultClient) SearchStrainsByEffectName(effectName string) (SearchStrainsByEffectNameResults, error) {
 	strainsResults := make(SearchStrainsByEffectNameResults, 0)
 
-	searchURL := strainSearchBasePath + "/effect/" + string(effectName)
+	searchURL := strainSearchBasePath + "/effect/" + url.PathEscape(string(effectName))
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
 
 	if err != nil {
@@ -322,7 +323,7 @@ type SearchStrainsByFlavorResults []SearchStrainsByFlavorResult
 func (c *DefaultClient) SearchStrainsByFlavor(flavor Flavor) (SearchStrainsByFlavorResults, error) {
 	strainsResults := make(SearchStrainsByFlavorResults, 0)
 
-	searchURL := strainSearchBasePath + "/flavor/" + string(flavor)
+	searchURL := strainSearchBasePath + "/flavor/" + url.PathEscape(string(flavor))
 	strainsResultsJSONBytes, err := c.simpleHTTPGet(searchURL)
 
 	if err != nil {
@@ -370,9 +371,9 @@ func (c *DefaultClient) GetStrainDescriptionByStrainID(id int) (string, error) {
 	return description, nil
 }
 
-// GetStrainFavorsByStrainID returns a slice of Flavors for
+// GetStrainFlavorsByStrainID returns a slice of Flavors for
 // the Strain of the id passed in.
-func (c *DefaultClient) GetStrainFavorsByStrainID(id int) ([]Flavor, error) {
+func (c *DefaultClient) GetStrainFlavorsByStrainID(id int) ([]Flavor, error) {
 	flavors := make([]Flavor, 0)
 
 	flavorsResultBytes, err := c.getStrainDataByID("flavors", id)
@@ -396,30 +397,51 @@ type EffectsByEffectType map[EffectType][]Effect
 // and the values are a slice of Effect items.
 func (c *DefaultClient) GetStrainEffectsByStrainID(id int) (EffectsByEffectType, error) {
 	effects := make(EffectsByEffectType)
-	effectsMap := make(map[string][]string)
 
 	effectsResultBytes, err := c.getStrainDataByID("effects", id)
 	if err != nil {
 		return effects, fmt.Errorf("Problem retrieving effects for Strain with ID %d: %s", id, err)
 	}
 
-	marshallErr := json.Unmarshal(effectsResultBytes, &effectsMap)
+	marshallErr := json.Unmarshal(effectsResultBytes, &effects)
 	if marshallErr != nil {
 		return effects, fmt.Errorf("Problem parsing effects for Strain with ID %d: %s", id, marshallErr)
-	}
-
-	effects, convertErr := effectMapToEffectsByEffectType(effectsMap)
-	if convertErr != nil {
-		return effects, fmt.Errorf("Problem converting effects map to EffectsByEffectType for Strain with ID %d: %s", id, convertErr)
 	}
 
 	return effects, nil
 }
 
-// effectMapToEffectsByEffectType converts the JSON object we get back from the API
-// to the required type.  Maybe could convert this to an unmarshaller.
-func effectMapToEffectsByEffectType(effectsMap map[string][]string) (effectsByEffectType EffectsByEffectType, err error) {
-	effectsByEffectType = make(EffectsByEffectType)
+// MarshalJSON is implemented here becuase the output JSON
+// is a JSON obect with the type as the keys and an array
+// of effectNames (no EffectTypes since it's the key in the
+// map).
+func (e EffectsByEffectType) MarshalJSON() ([]byte, error) {
+	result := make(map[string][]string)
+
+	for effectType, effects := range e {
+		effectNames := make([]string, 0)
+
+		for _, effect := range effects {
+			effectNames = append(effectNames, effect.Name)
+		}
+
+		result[string(effectType)] = effectNames
+	}
+
+	return json.Marshal(result)
+}
+
+// UnmarshalJSON is a custom JSON marshaller for this type because
+// the source data is missing EffectType on Effect, the Effect is
+// just a string in the JSON source, not a object with a name and
+// and type.
+func (e EffectsByEffectType) UnmarshalJSON(data []byte) error {
+	effectsMap := make(map[string][]string)
+
+	marshallErr := json.Unmarshal(data, &effectsMap)
+	if marshallErr != nil {
+		return fmt.Errorf("Problem parsing effects for Strain: %s", marshallErr)
+	}
 
 	for effectTypeString, effectNames := range effectsMap {
 		effectType := EffectType(effectTypeString)
@@ -429,9 +451,8 @@ func effectMapToEffectsByEffectType(effectsMap map[string][]string) (effectsByEf
 			effects[index] = Effect{Name: name, Type: effectType}
 		}
 
-		effectsByEffectType[effectType] = effects
+		e[effectType] = effects
 	}
 
-	// Likely to change converting of type to allow for errors if unknown type is used.
-	return effectsByEffectType, err
+	return nil
 }
