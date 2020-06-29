@@ -29,3 +29,4 @@
  You can see [a couple of examples](./examples/default_client/simple.go):
  1. where we override all requests to return an error whose message includes the path that was requested; good for unit testing and tracking calls
  1. where we only override one requst for a specific operation on a specific strain ID, but leave the rest of the existing logic and api calls intact.
+ 1. more to come...
